@@ -1,0 +1,3 @@
+[submodule "BGGModule"]
+	path = BGGModule
+	url = git@github.com:SumGuyV5/BGGModule.git

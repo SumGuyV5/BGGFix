@@ -2,7 +2,7 @@
 import requests, lxml.html
 import os
 import sys
-import getpass
+import configparser
 
 sys.path.append('BGGModule.zip')
 
@@ -13,57 +13,25 @@ import BGGModule.Functions
 
 class BGGFix:
     def __init__(self):
-        self.name = "Richard"           # the name to be search for and found.
-        self.nameto = "Richard Allen"   # what name should be renamed to.
-        self.bggusername = "SumGuyV5"   # board game geek username that all the plays are recorded under.
-        self.bggpassword = ""           # board game geek password. Put your password in passwd.txt or type it in when prompted.
-        self.pagesize = 100             # how many plays per xml file. 100 is the max.
-        self.playnum = []               # list of play numbers to fix
+        config = configparser.RawConfigParser()
+        config.read("creds")
+        
+        self.name = "Richard"                           # the name to be search for and found.
+        self.nameto = "Richard Allen"                   # what name should be renamed to.
+        self.bggusername = config.get('BGG', 'user')    # board game geek username that all the plays are recorded under.
+        self.bggpassword = config.get('BGG', 'pass')    # board game geek password. Put your password in passwd.txt or type it in when prompted.
+        self.pagesize = 100                             # how many plays per xml file. 100 is the max.
+        self.playnum = []                               # list of play numbers to fix
         self.s = None
-        self.dryRun = True              # if True don't chanage the name this is just a dry run.
+        self.dryRun = True                              # if True don't chanage the name this is just a dry run.
         # how many xml files do we need to download
         self.countto = BGGModule.Functions.PlayCount(self.bggusername, self.pagesize)
 
     def Main(self):
-        if self.yesNo("Would you like to download xml?") == True:
-            self.XMLRetrieve()  # downloads all the xml files with the info we need
+        self.XMLRetrieve()  # downloads all the xml files with the info we need
 
         self.XMLRead()  # reads the xml files and finds all the id's for the recorded plays that need to be fix.
-
-    def yesNo(self, question):
-        yes = {'yes','ye', 'y', ''}
-        no = {'no','n'}
-
-        print(question + " [Y/n] ")
-        choice = input().lower()
-        if choice in yes:
-           return True
-        elif choice in no:
-           return False
-        else:
-           print("Please respond with 'yes' or 'no'")
         
-    def readPasswordFile(self):
-        """Returns password in passwd.txt."""
-        rtn = ""
-        try:
-            f = open("passwd.txt","r")
-            rtn = f.read()
-            f.close()
-        except FileNotFoundError:
-            print("Password file not found.")
-        return rtn
-
-    def passwordCheck(self):
-        if not self.bggpassword:
-            self.bggpassword = readFile()
-            print (self.bggpassword)
-            if not self.bggpassword:
-                print("Please enter your bgg password : ")
-                self.bggpassword = getpass.getpass()
-        else:
-            print("password hard coded")
-
     def loginBGG(self):
         """Logins in to BGG using username and password."""
         self.passwordCheck()
@@ -92,7 +60,7 @@ class BGGFix:
         if (self.bggusername in page.text) == True:
             print("%s is logged in." % self.bggusername )
         else:
-            print("%s could not be logged in." % self.bggusername)
+            print("%s is not logged in." % self.bggusername)
             quit()
         
         page_html = lxml.html.fromstring(page.text)
@@ -107,8 +75,8 @@ class BGGFix:
                     #if it's a checkbox and it is checked add it
                     form[x.attrib["name"]] = x.attrib["value"] 
                 else:
-                    if x.attrib["value"] == "Richard":
-                        form[x.attrib["name"]] = "Richard Allen"
+                    if x.attrib["value"] == self.name:
+                        form[x.attrib["name"]] = self.nameto
                     else:
                         form[x.attrib["name"]] = x.attrib["value"]
             except KeyError:

@@ -127,9 +127,9 @@ class BGGFix:
         self.session.post('https://www.boardgamegeek.com/geekplay.php', data=form)
 
     def play_edit_all(self):
-        for idx,play_num in self.play_nums:
+        for idx,play_num in enumerate(self.play_nums):
             print('====================================')
-            print(f'Play {idx} of {len(self.play_nums)}')
+            print(f'Play {idx + 1} of {len(self.play_nums)}')
             print('====================================')
             self.play_edit(play_num)
 

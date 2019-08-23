@@ -2,6 +2,7 @@
 import configparser
 import os
 import sys
+import time
 
 import lxml.html
 import requests
@@ -35,7 +36,7 @@ class BGGFix:
 
         :return: None
         """
-        #self.retrieve_xml()  # downloads all the xml files with the info we need
+        self.retrieve_xml()  # downloads all the xml files with the info we need
         self.read_xml()  # reads the xml files and finds all the id's for the recorded plays that need to be fix.
         self.login_bgg()  # login
         self.play_edit_all()
@@ -114,18 +115,22 @@ class BGGFix:
 
         for name, value in form.items():
             if value == self.name:
-                form[name] = self.name
-                print(f'{name} = {value} to {name} = {self.name}')
+                form[name] = self.name_to
+                print(f'{name} = {value} to {name} = {self.name_to}')
 
         if self.dryRun:
             print('This is a dry run. We will stop here.')
             return  # this is a dry run so stop here and don't save the changes.
 
         # response =
+        time.sleep(2) # lets not hit the server to hard
         self.session.post('https://www.boardgamegeek.com/geekplay.php', data=form)
 
     def play_edit_all(self):
-        for play_num in self.play_nums:
+        for idx,play_num in self.play_nums:
+            print('====================================')
+            print(f'Play {idx} of {len(self.play_nums)}')
+            print('====================================')
             self.play_edit(play_num)
 
     def retrieve_xml(self):

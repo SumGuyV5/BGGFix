@@ -24,21 +24,32 @@ class BGGFix:
         self.bgg_user = config.get('BGG', 'user')  # board game geek username that all the plays are recorded under.
         self.bgg_password = config.get('BGG', 'pass')  # board game geek password.
         self.pagesize = 100  # how many plays per xml file. 100 is the max.
-        self.play_num = []  # list of play numbers to fix
-        self.s = None
+        self.play_nums = []  # list of play numbers to fix
+        self.session = None
         self.dryRun = True  # if True don't change the name this is just a dry run.
         # how many xml files do we need to download
         self.count_to = BGGModule.Functions.play_count(self.bgg_user, self.pagesize)
 
     def main(self):
-        self.retrieve_xml()  # downloads all the xml files with the info we need
+        """
+
+        :return: None
+        """
+        #self.retrieve_xml()  # downloads all the xml files with the info we need
         self.read_xml()  # reads the xml files and finds all the id's for the recorded plays that need to be fix.
+        self.login_bgg()  # login
+        self.play_edit_all()
 
     def login_bgg(self):
-        """Logins in to BGG using username and password."""
-        self.s = requests.session()
+        """
+        Login to board game geek use self.bgg_user and self.bgg_password and checks that you logged in.
+        If we can't login we tell the user and quit.
 
-        login = self.s.get('https://www.boardgamegeek.com/login')
+        :return: None
+        """
+        self.session = requests.session()
+
+        login = self.session.get('https://www.boardgamegeek.com/login')
         login_html = lxml.html.fromstring(login.text)
         hidden_inputs = login_html.xpath(r'//form//input[@type="hidden"]')
         form = {x.attrib["name"]: x.attrib["value"] for x in hidden_inputs}
@@ -46,58 +57,101 @@ class BGGFix:
         form['username'] = self.bgg_user
         form['password'] = self.bgg_password
 
-        response = self.s.post('https://www.boardgamegeek.com/login', data=form)
+        response = self.session.post('https://www.boardgamegeek.com/login', data=form)
 
-        if self.bgg_user in response.text:
-            print("%s is logged in." % self.bgg_user)
-        else:
-            print("%s could not be logged in." % self.bgg_user)
+        if "GEEK.userid = 0;" in response.text:
+            print(f'{self.bgg_user} could not be logged in.')
             quit()
-
-    def play_edit(self):
-        page = self.s.get('https://www.boardgamegeek.com/play/edit/35817904')
-
-        if self.bgg_user in page.text:
+        else:
             print(f'{self.bgg_user} is logged in.')
-        else:
-            print(f'{self.bgg_user} is not logged in.')
-            quit()
 
-        page_html = lxml.html.fromstring(page.text)
+    def play_name_found(self, play_num):
+        """
+        We check the play_num to see if the name we are looking to change is in the play record.
+
+        :param play_num: The play number to check.
+        :return: True if the name is found in the play record and dict containing the play data to alter.
+        """
+        found = False
+        response = self.session.get(f'https://www.boardgamegeek.com/play/edit/{str(play_num)}')
+
+        if "GEEK.userid = 0;" in response.text:
+            print(f'{self.bgg_user} could not be logged in.')
+            quit()
+        else:
+            print(f'{self.bgg_user} is logged in.')
+
+        page_html = lxml.html.fromstring(response.text)
 
         hidden_inputs = page_html.xpath(r'//form[@id="quickplay_form1"]//input')
         form = {}
 
         for x in hidden_inputs:
             try:
-                if x.attrib["type"] == "checkbox" and x.attrib["checked"] == "checked":
-                    # if it's a checkbox and it is checked add it
-                    form[x.attrib["name"]] = x.attrib["value"]
-                else:
-                    if x.attrib["value"] == self.name:
-                        form[x.attrib["name"]] = self.name_to
-                    else:
-                        form[x.attrib["name"]] = x.attrib["value"]
+                if x.attrib["value"] == self.name:
+                    found = True
+                form[x.attrib["name"]] = x.attrib["value"]
             except KeyError:
-                print('Error %s' % x.attrib["name"])
+                print(f'Error {x.attrib["name"]}')
 
         print(form)
-        # response = self.s.post('https://www.boardgamegeek.com/geekplay.php', data=form)
+
+        return found, form
+
+    def play_edit(self, play_num):
+        """
+        We go to the play that is to be change and read the data off of the page.
+        We then make the need change and pass the changes to geekplay.php to save.
+
+        :param play_num: The play number to edit.
+        :return: None
+        """
+        found, form = self.play_name_found(play_num)
+        if found:
+            print(f'{self.name} was found.')
+        else:
+            return
+
+        for name, value in form.items():
+            if value == self.name:
+                form[name] = self.name
+                print(f'{name} = {value} to {name} = {self.name}')
+
+        if self.dryRun:
+            print('This is a dry run. We will stop here.')
+            return  # this is a dry run so stop here and don't save the changes.
+
+        # response =
+        self.session.post('https://www.boardgamegeek.com/geekplay.php', data=form)
+
+    def play_edit_all(self):
+        for play_num in self.play_nums:
+            self.play_edit(play_num)
 
     def retrieve_xml(self):
+        """
+        Download all the plays from board game geek.
+
+        :return: None
+        """
         url = f'http://www.boardgamegeek.com/xmlapi2/plays?username={self.bgg_user}&pagesize={str(self.pagesize)}&page='
         download_xml = DownloadXML()
         download_xml.download_all(url, "plays", self.count_to)
 
     def read_xml(self):
+        """
+        Reads all the xml files that were download by retrieve_xml
+
+        :return: None
+        """
         read_xml = ReadXML()
         read_xml.read_xml_all(os.path.join(os.getcwd(), "plays"), self.count_to)
 
         for play in read_xml.plays:
             idx = play.find_player_by_name(self.name)
             if idx != -1:
-                self.play_num.append(play.id)
-        print(self.play_num)
+                self.play_nums.append(play.id)
+        print(self.play_nums)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import configparser
 import os
-import sys
 import time
 
 import lxml.html
@@ -11,8 +10,6 @@ from BGGModule.DownloadXML import DownloadXML
 from BGGModule.ReadXML import ReadXML
 
 import BGGModule.Functions
-
-sys.path.append('BGGModule.zip')
 
 
 class BGGFix:
@@ -123,11 +120,11 @@ class BGGFix:
             return  # this is a dry run so stop here and don't save the changes.
 
         # response =
-        time.sleep(2) # lets not hit the server to hard
+        time.sleep(2)  # lets not hit the server to hard
         self.session.post('https://www.boardgamegeek.com/geekplay.php', data=form)
 
     def play_edit_all(self):
-        for idx,play_num in enumerate(self.play_nums):
+        for idx, play_num in enumerate(self.play_nums):
             print('====================================')
             print(f'Play {idx + 1} of {len(self.play_nums)}')
             print('====================================')

@@ -119,11 +119,14 @@ class BGGFix:
             print('This is a dry run. We will stop here.')
             return  # this is a dry run so stop here and don't save the changes.
 
-        # response =
         time.sleep(2)  # lets not hit the server to hard
         self.session.post('https://www.boardgamegeek.com/geekplay.php', data=form)
 
     def play_edit_all(self):
+        """
+        Prints out the total number of play records to be edit and the current play being edited.
+        :return:
+        """
         for idx, play_num in enumerate(self.play_nums):
             print('====================================')
             print(f'Play {idx + 1} of {len(self.play_nums)}')

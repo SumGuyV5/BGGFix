@@ -17,8 +17,10 @@ class BGGFix:
         config = configparser.RawConfigParser()
         config.read("creds")
 
-        self.name = "Richard"  # the name to be search for and found.
-        self.name_to = "Richard Allen"  # what name should be renamed to.
+        self.change_from = '1'  # the name to be search for and found.
+        self.change_to = '0'  # what name should be renamed to.
+        self.change_attrib = 'nowinstats'
+        self.player = False
         self.bgg_user = config.get('BGG', 'user')  # board game geek username that all the plays are recorded under.
         self.bgg_password = config.get('BGG', 'pass')  # board game geek password.
         self.pagesize = 100  # how many plays per xml file. 100 is the max.
@@ -63,7 +65,21 @@ class BGGFix:
         else:
             print(f'{self.bgg_user} is logged in.')
 
-    def play_name_found(self, play_num):
+    def checkbox_check(self, x):
+        found = False
+        value = 0
+        if x.attrib['type'] == 'checkbox':
+            found = True
+            try:
+                x.attrib['checked']
+                value = 1
+            except KeyError:
+                print(f'Error {x.attrib["name"]}')
+
+        return found, value
+
+
+    def play_key_found(self, play_num):
         """
         We check the play_num to see if the name we are looking to change is in the play record.
 
@@ -86,9 +102,12 @@ class BGGFix:
 
         for x in hidden_inputs:
             try:
-                if x.attrib["value"] == self.name:
-                    found = True
                 form[x.attrib["name"]] = x.attrib["value"]
+                found_check, value = self.checkbox_check(x)
+                if found_check:
+                    form[x.attrib["name"]] = value
+                if x.attrib["name"] == self.change_attrib and x.attrib["value"] == self.change_from:
+                    found = True
             except KeyError:
                 print(f'Error {x.attrib["name"]}')
 
@@ -104,16 +123,17 @@ class BGGFix:
         :param play_num: The play number to edit.
         :return: None
         """
-        found, form = self.play_name_found(play_num)
+        found, form = self.play_key_found(play_num)
         if found:
-            print(f'{self.name} was found.')
+            print(f'{self.change_from} was found.')
         else:
+            print(f'{self.change_from} was Not found.')
             return
 
-        for name, value in form.items():
-            if value == self.name:
-                form[name] = self.name_to
-                print(f'{name} = {value} to {name} = {self.name_to}')
+        for key, value in form.items():
+            if key == self.change_attrib and value == self.change_from:
+                form[key] = self.change_to
+                print(f'{key} = {value} to {key} = {self.change_to}')
 
         if self.dryRun:
             print('This is a dry run. We will stop here.')
@@ -121,6 +141,13 @@ class BGGFix:
 
         time.sleep(2)  # lets not hit the server to hard
         self.session.post('https://www.boardgamegeek.com/geekplay.php', data=form)
+
+        found, form = self.play_key_found(play_num)
+        if found:
+            print(f'{self.change_from} was found.')
+        else:
+            print(f'{self.change_from} was Not found.')
+            return
 
     def play_edit_all(self):
         """
@@ -153,9 +180,14 @@ class BGGFix:
         read_xml.read_xml_all(os.path.join(os.getcwd(), "plays"), self.count_to)
 
         for play in read_xml.plays:
-            idx = play.find_player_by_name(self.name)
-            if idx != -1:
-                self.play_nums.append(play.id)
+            if self.player:
+                for player in play.players:
+                    if player.__getattribute__(self.change_attrib) == self.change_from:
+                        self.play_nums.append(play.id)
+                        break
+            else:
+                if play.__getattribute__(self.change_attrib) == self.change_from:
+                    self.play_nums.append(play.id)
         print(self.play_nums)
 
 

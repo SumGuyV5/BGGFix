@@ -4,6 +4,7 @@ import configparser
 import lxml.html
 import BGGModule.Functions
 from BGGModule.DownloadXML import DownloadXML
+from BGGModule.PlaysXMLDataset import PlaysXMLDataset
 
 
 class BGGFixBase:
@@ -19,6 +20,9 @@ class BGGFixBase:
         self.dryRun = True  # if True don't change the name this is just a dry run.
         # how many xml files do we need to download
         self.count_to = BGGModule.Functions.count_to(self.bgg_user, self.pagesize)
+
+        self.play_nums = []  # list of play numbers to fix
+        self.current_play = None
 
     def login_bgg(self):
         """
@@ -152,7 +156,8 @@ class BGGFixBase:
             print('====================================')
             print(f'Play {idx + 1} of {len(self.play_nums)}')
             print('====================================')
-            self.play_edit(play_num)
+            self.play_edit(play_num.id)
+            self.current_play = play_num
 
     def retrieve_xml(self):
         """

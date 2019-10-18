@@ -12,8 +12,6 @@ class BGGFix(BGGFixBase):
         self.change_attrib = 'nowinstats'
         self.player = False
 
-        self.play_nums = []  # list of play numbers to fix
-
     def main(self):
         """
 
@@ -49,11 +47,11 @@ class BGGFix(BGGFixBase):
             if self.player:
                 for player in play.players:
                     if player.__getattribute__(self.change_attrib) == self.change_from:
-                        self.play_nums.append(play.id)
+                        self.play_nums.append(play)
                         break
             else:
                 if str(play.__getattribute__(self.change_attrib)) == self.change_from:
-                    self.play_nums.append(play.id)
+                    self.play_nums.append(play)
         print(self.play_nums)
 
 

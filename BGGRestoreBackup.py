@@ -1,11 +1,4 @@
 import os
-import time
-import lxml.html
-import requests
-import configparser
-import BGGModule.Functions
-
-from BGGModule.DownloadXML import DownloadXML
 from BGGModule.ReadXML import ReadXML
 
 from BGGFix import BGGFixBase
@@ -19,7 +12,6 @@ class BGGRestoreBackup(BGGFixBase):
         self.restore = []
         self.backup_dir = os.path.join(os.getcwd(), "Backup/plays")
         self.backup_count = 12
-        self.current_play = None
 
     def main(self):
         """
@@ -29,7 +21,7 @@ class BGGRestoreBackup(BGGFixBase):
         # self.retrieve_xml()  # downloads all the xml files with the info we need
         self.read_xml()  # reads the xml files and finds all the id's for the recorded plays that need to be fix.
         self.login_bgg()  # login
-        self.play_restore_all()
+        self.play_edit_all()
 
     def edit_attrib(self, form):
         lst = ['dateinput', 'location', 'quantity', 'length', 'incomplete', 'nowinstats']
@@ -45,18 +37,6 @@ class BGGRestoreBackup(BGGFixBase):
                 form[key] = str(val)
             elif key in lst2:
                 pass
-
-    def play_restore_all(self):
-        """
-        Prints out the total number of play records to be edit and the current play being edited.
-        :return:
-        """
-        for idx, play in enumerate(self.restore):
-            print('====================================')
-            print(f'Play {idx + 1} of {len(self.restore)}')
-            print('====================================')
-            self.play_edit(play.id)
-            self.current_play = play
 
     def read_xml(self):
         """
@@ -75,7 +55,7 @@ class BGGRestoreBackup(BGGFixBase):
             for back in self.backup:
                 if cur.id == back.id:
                     if cur != back:
-                        self.restore.append(back)
+                        self.play_nums.append(back)
 
 if __name__ == "__main__":
     main = BGGRestoreBackup()

@@ -4,7 +4,6 @@ import configparser
 import lxml.html
 import BGGModule.Functions
 from BGGModule.DownloadXML import DownloadXML
-from BGGModule.PlaysXMLDataset import PlaysXMLDataset
 
 
 class BGGFixBase:
@@ -23,6 +22,16 @@ class BGGFixBase:
 
         self.play_nums = []  # list of play numbers to fix
         self.current_play = None
+
+    def run(self):
+        """
+
+        :return: None
+        """
+        # self.retrieve_xml()  # downloads all the xml files with the info we need
+        self.read_xml()  # reads the xml files and finds all the id's for the recorded plays that need to be fix.
+        self.login_bgg()  # login
+        self.play_edit_all()
 
     def login_bgg(self):
         """
@@ -60,16 +69,14 @@ class BGGFixBase:
                 print(f'Error {value}')
         return count
 
-    def checkbox_check(self, x):
+    @staticmethod
+    def checkbox_check(x):
         found = False
         value = '0'
         if x.attrib['type'] == 'checkbox':
             found = True
-            try:
-                x.attrib['checked']
+            if 'checked' in x.attrib:
                 value = '1'
-            except KeyError:
-                print(f'Error {x.attrib["name"]}')
 
         return found, value
 
@@ -77,7 +84,7 @@ class BGGFixBase:
         pass
 
     def found_attrib(self, x):
-        pass
+        return True
 
     def found_play(self, play_num):
         """
@@ -107,7 +114,7 @@ class BGGFixBase:
                     form[x.attrib["name"]] = value
                 else:
                     form[x.attrib["name"]] = x.attrib["value"]
-                if found == False:
+                if not found:
                     found = self.found_attrib(x)
             except KeyError:
                 form[x.attrib["name"]] = ''
@@ -156,8 +163,8 @@ class BGGFixBase:
             print('====================================')
             print(f'Play {idx + 1} of {len(self.play_nums)}')
             print('====================================')
-            self.play_edit(play_num.id)
             self.current_play = play_num
+            self.play_edit(play_num.id)
 
     def retrieve_xml(self):
         """
@@ -168,3 +175,6 @@ class BGGFixBase:
         url = f'http://www.boardgamegeek.com/xmlapi2/plays?username={self.bgg_user}&pagesize={str(self.pagesize)}&page='
         download_xml = DownloadXML()
         download_xml.download_all(url, "plays", self.count_to)
+
+    def read_xml(self):
+        pass

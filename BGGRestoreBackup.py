@@ -1,4 +1,5 @@
 import os
+import re
 from BGGModule.ReadXML import ReadXML
 
 from BGGFix import BGGFixBase
@@ -13,30 +14,30 @@ class BGGRestoreBackup(BGGFixBase):
         self.backup_dir = os.path.join(os.getcwd(), "Backup/plays")
         self.backup_count = 12
 
-    def main(self):
-        """
-
-        :return: None
-        """
-        # self.retrieve_xml()  # downloads all the xml files with the info we need
-        self.read_xml()  # reads the xml files and finds all the id's for the recorded plays that need to be fix.
-        self.login_bgg()  # login
-        self.play_edit_all()
-
     def edit_attrib(self, form):
-        lst = ['dateinput', 'location', 'quantity', 'length', 'incomplete', 'nowinstats']
-        lst2 = ['players[']
+        play_attrib = ['dateinput', 'location', 'quantity', 'length', 'incomplete', 'nowinstats']
+        player_attrib = ['name', 'username', 'color', 'position', 'score', 'rating', 'new', 'win']
+        player_num = {}
         for key, value in form.items():
-            if key in lst[0]:
+            if key in 'dateinput':
                 if value != self.current_play.date:
                     form[key] = self.current_play.date_str()
-            elif key in lst:
+            elif key in play_attrib:
                 val = self.current_play.__getattribute__(key)
                 if type(val) is bool:
                     val = int(val)
                 form[key] = str(val)
-            elif key in lst2:
-                pass
+            elif key[:7] in 'players':
+                print(key)
+                match = re.findall(r'(?<=\[).+?(?=\])', key)
+                if match[1] == 'name':
+                    player_num[match[0]] = self.current_play.find_player_by_name(value)
+                else:
+                    if match[1] in player_attrib:
+                        val = player_num[match[0]].__getattribute__(match[1])
+                        if type(val) is bool:
+                            val = int(val)
+                        form[key] = str(val)
 
     def read_xml(self):
         """
@@ -57,6 +58,7 @@ class BGGRestoreBackup(BGGFixBase):
                     if cur != back:
                         self.play_nums.append(back)
 
+
 if __name__ == "__main__":
     main = BGGRestoreBackup()
-    main.main()
+    main.run()

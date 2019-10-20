@@ -12,16 +12,6 @@ class BGGFix(BGGFixBase):
         self.change_attrib = 'nowinstats'
         self.player = False
 
-    def main(self):
-        """
-
-        :return: None
-        """
-        # self.retrieve_xml()  # downloads all the xml files with the info we need
-        self.read_xml()  # reads the xml files and finds all the id's for the recorded plays that need to be fix.
-        self.login_bgg()  # login
-        self.play_edit_all()
-
     def edit_attrib(self, form):
         for key, value in form.items():
             if key == self.change_attrib and value == self.change_from:
@@ -57,4 +47,4 @@ class BGGFix(BGGFixBase):
 
 if __name__ == "__main__":
     bgg_fix = BGGFix()
-    bgg_fix.main()
+    bgg_fix.run()

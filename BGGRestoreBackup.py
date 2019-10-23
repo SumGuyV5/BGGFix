@@ -28,7 +28,6 @@ class BGGRestoreBackup(BGGFixBase):
                     val = int(val)
                 form[key] = str(val)
             elif key[:7] in 'players':
-                print(key)
                 match = re.findall(r'(?<=\[).+?(?=\])', key)
                 if match[1] == 'name':
                     player_num[match[0]] = self.current_play.find_player_by_name(value)

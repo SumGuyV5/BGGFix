@@ -7,7 +7,7 @@ from BGGModule.DownloadXML import DownloadXML
 
 
 class BGGFixBase:
-    def __init__(self):
+    def __init__(self, dry_run=True):
         config = configparser.RawConfigParser()
         config.read("creds")
 
@@ -16,7 +16,7 @@ class BGGFixBase:
 
         self.pagesize = 100  # how many plays per xml file. 100 is the max.
         self.session = None
-        self.dryRun = True  # if True don't change the name this is just a dry run.
+        self.dryRun = dry_run  # if True don't change the name this is just a dry run.
         # how many xml files do we need to download
         self.count_to = BGGModule.Functions.count_to(self.bgg_user, self.pagesize)
 

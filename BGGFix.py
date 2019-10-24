@@ -5,11 +5,11 @@ from BGGFixBase import BGGFixBase
 
 
 class BGGFix(BGGFixBase):
-    def __init__(self):
-        super().__init__()
-        self.change_from = '1'  # the name to be search for and found.
-        self.change_to = '0'  # what name should be renamed to.
-        self.change_attrib = 'nowinstats'
+    def __init__(self, change_from, change_to, change_attrib, dry_run=True):
+        super().__init__(dry_run)
+        self.change_from = change_from  # the name to be search for and found.
+        self.change_to = change_to  # what name should be renamed to.
+        self.change_attrib = change_attrib
         self.player = False
 
     def edit_attrib(self, form):
@@ -46,5 +46,5 @@ class BGGFix(BGGFixBase):
 
 
 if __name__ == "__main__":
-    bgg_fix = BGGFix()
+    bgg_fix = BGGFix('1', '0', 'nowinstats')
     bgg_fix.run()

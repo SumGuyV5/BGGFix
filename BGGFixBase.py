@@ -28,7 +28,7 @@ class BGGFixBase:
 
         :return: None
         """
-        # self.retrieve_xml()  # downloads all the xml files with the info we need
+        self.retrieve_xml()  # downloads all the xml files with the info we need
         self.read_xml()  # reads the xml files and finds all the id's for the recorded plays that need to be fix.
         self.login_bgg()  # login
         self.play_edit_all()
@@ -60,6 +60,12 @@ class BGGFixBase:
 
     @staticmethod
     def player_count(form):
+        """
+        Gets the number of players in the board game geek edit form.
+
+        :param form: bgg edit form
+        :return: returns the number of players
+        """
         count = 0
         for key, value in form.items():
             try:
@@ -70,20 +76,39 @@ class BGGFixBase:
         return count
 
     @staticmethod
-    def checkbox_check(x):
+    def checkbox_check(tag):
+        """
+        Takes the html tag and if it is a checkbox type return True and if it is we check if it has a 'checked'
+        attribute and if true returns value of '1'.
+
+        :param tag: the html tag to check.
+        :return: returns True if checkbox attribute is found else False.
+        """
         found = False
         value = '0'
-        if x.attrib['type'] == 'checkbox':
+        if tag.attrib['type'] == 'checkbox':
             found = True
-            if 'checked' in x.attrib:
+            if 'checked' in tag.attrib:
                 value = '1'
 
         return found, value
 
     def edit_attrib(self, form):
+        """
+        This is for derived classes.
+
+        :param form:
+        :return:
+        """
         pass
 
-    def found_attrib(self, x):
+    def found_attrib(self, tag):
+        """
+        Return True unless overridden by derived classes.
+
+        :param tag:
+        :return:
+        """
         return True
 
     def found_play(self, play_num):

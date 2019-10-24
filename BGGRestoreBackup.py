@@ -14,12 +14,19 @@ class BGGRestoreBackup(BGGFixBase):
         self.backup_count = 12
 
     def edit_attrib(self, form):
+        """
+        Take the edit data from board game geek edit form and replace the data with xml data were list in play_attrib
+        and player_attrib.
+
+        :param form: the form data from board game geek edit data.
+        :return:
+        """
         # play attributes to change
         play_attrib = ['dateinput', 'location', 'quantity', 'length', 'incomplete', 'nowinstats']
         # player attributes to change
         player_attrib = ['name', 'username', 'color', 'position', 'score', 'rating', 'new', 'win']
         player_names = {'Richard Allan': 'Richard Allen', 'Richard': 'Richard Allen', 'Demitre': 'Dimetre',
-                       'Bula': 'Beulah', 'Plary5': 'Player 5', 'Anth': 'Anthony'}
+                        'Bula': 'Beulah', 'Plary5': 'Player 5', 'Anth': 'Anthony'}
         player_num = {}
         for key, value in form.items():
             if key in 'dateinput':
@@ -31,7 +38,7 @@ class BGGRestoreBackup(BGGFixBase):
                     val = int(val)
                 form[key] = str(val)
             elif key[:7] in 'players':
-                match = re.findall(r'(?<=\[).+?(?=\])', key) # get everything between square brackets.
+                match = re.findall(r'(?<=\[).+?(?=\])', key)  # get everything between square brackets.
                 player_num[match[0]] = self.current_play.players[int(match[0])]
                 if player_num[match[0]] is None:
                     print('No Player Found? Was a new player add in the newer record?')
@@ -50,7 +57,6 @@ class BGGRestoreBackup(BGGFixBase):
                         if type(val) is bool:
                             val = int(val)
                         form[key] = str(val)
-
 
     def read_xml(self):
         """
@@ -73,7 +79,7 @@ class BGGRestoreBackup(BGGFixBase):
 
 
 if __name__ == "__main__":
-    main = BGGRestoreBackup()
-    main.run()
-    print([num.id for num in main.play_nums])
+    bgg_fix = BGGRestoreBackup()
+    bgg_fix.run()
+    print([num.id for num in bgg_fix.play_nums])
     print('done')
